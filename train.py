@@ -48,22 +48,22 @@ for epoch in range(num_epochs):
     correct = 0
     total = 0
 
-for whisper_mel, vocoder_mel, label, _ in tqdm(train_loader, desc=f"Epoch {epoch+1} [train]"):
-    whisper_mel = whisper_mel.to(device)
-    label = label.to(device)
-    optimizer.zero_grad()
-    _, logits = model(whisper_mel)
-    loss = criterion(logits, label)
-    loss.backward()
-    optimizer.step()
-    running_loss += loss.item() * whisper_mel.size(0)
+    for whisper_mel, vocoder_mel, label, _ in tqdm(train_loader, desc=f"Epoch {epoch+1} [train]"):
+        whisper_mel = whisper_mel.to(device)
+        label = label.to(device)
+        optimizer.zero_grad()
+        _, logits = model(whisper_mel)
+        loss = criterion(logits, label)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item() * whisper_mel.size(0)
 
-    # Accuracy
-    preds = logits.argmax(dim=1)
-    correct += (preds == label).sum().item()
-    total += label.size(0)
+        # Accuracy
+        preds = logits.argmax(dim=1)
+        correct += (preds == label).sum().item()
+        total += label.size(0)
 
-    wandb.log({"train_loss": loss.item(), "epoch": epoch+1})
+        wandb.log({"train_loss": loss.item(), "epoch": epoch+1})
 
     avg_train_loss = running_loss / len(train_dataset)
     train_acc = correct / total
