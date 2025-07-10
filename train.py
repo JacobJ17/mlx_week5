@@ -74,17 +74,16 @@ for whisper_mel, vocoder_mel, label, _ in tqdm(train_loader, desc=f"Epoch {epoch
     val_correct = 0
     val_total = 0
     with torch.no_grad():
+        for whisper_mel, vocoder_mel, label, _ in tqdm(val_loader, desc=f"Epoch {epoch+1} [val]"):
+            whisper_mel = whisper_mel.to(device)
+            label = label.to(device)
+            _, logits = model(whisper_mel)
+            loss = criterion(logits, label)
+            val_loss += loss.item() * whisper_mel.size(0)
 
-    for whisper_mel, vocoder_mel, label, _ in tqdm(val_loader, desc=f"Epoch {epoch+1} [val]"):
-        whisper_mel = whisper_mel.to(device)
-        label = label.to(device)
-        _, logits = model(whisper_mel)
-        loss = criterion(logits, label)
-        val_loss += loss.item() * whisper_mel.size(0)
-
-        preds = logits.argmax(dim=1)
-        val_correct += (preds == label).sum().item()
-        val_total += label.size(0)
+            preds = logits.argmax(dim=1)
+            val_correct += (preds == label).sum().item()
+            val_total += label.size(0)
 
     avg_val_loss = val_loss / len(val_dataset)
     val_acc = val_correct / val_total
