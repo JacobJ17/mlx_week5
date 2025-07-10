@@ -47,22 +47,23 @@ for epoch in range(num_epochs):
     running_loss = 0.0
     correct = 0
     total = 0
-    for mel_spec, label, _ in tqdm(train_loader, desc=f"Epoch {epoch+1} [train]"):
-        mel_spec = mel_spec.to(device)
-        label = label.to(device)
-        optimizer.zero_grad()
-        _, logits = model(mel_spec)
-        loss = criterion(logits, label)
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item() * mel_spec.size(0)
 
-        # Accuracy
-        preds = logits.argmax(dim=1)
-        correct += (preds == label).sum().item()
-        total += label.size(0)
+for whisper_mel, vocoder_mel, label, _ in tqdm(train_loader, desc=f"Epoch {epoch+1} [train]"):
+    whisper_mel = whisper_mel.to(device)
+    label = label.to(device)
+    optimizer.zero_grad()
+    _, logits = model(whisper_mel)
+    loss = criterion(logits, label)
+    loss.backward()
+    optimizer.step()
+    running_loss += loss.item() * whisper_mel.size(0)
 
-        wandb.log({"train_loss": loss.item(), "epoch": epoch+1})
+    # Accuracy
+    preds = logits.argmax(dim=1)
+    correct += (preds == label).sum().item()
+    total += label.size(0)
+
+    wandb.log({"train_loss": loss.item(), "epoch": epoch+1})
 
     avg_train_loss = running_loss / len(train_dataset)
     train_acc = correct / total
@@ -73,16 +74,17 @@ for epoch in range(num_epochs):
     val_correct = 0
     val_total = 0
     with torch.no_grad():
-        for mel_spec, label, _ in tqdm(val_loader, desc=f"Epoch {epoch+1} [val]"):
-            mel_spec = mel_spec.to(device)
-            label = label.to(device)
-            _, logits = model(mel_spec)
-            loss = criterion(logits, label)
-            val_loss += loss.item() * mel_spec.size(0)
 
-            preds = logits.argmax(dim=1)
-            val_correct += (preds == label).sum().item()
-            val_total += label.size(0)
+    for whisper_mel, vocoder_mel, label, _ in tqdm(val_loader, desc=f"Epoch {epoch+1} [val]"):
+        whisper_mel = whisper_mel.to(device)
+        label = label.to(device)
+        _, logits = model(whisper_mel)
+        loss = criterion(logits, label)
+        val_loss += loss.item() * whisper_mel.size(0)
+
+        preds = logits.argmax(dim=1)
+        val_correct += (preds == label).sum().item()
+        val_total += label.size(0)
 
     avg_val_loss = val_loss / len(val_dataset)
     val_acc = val_correct / val_total
@@ -104,10 +106,11 @@ print("Training complete!")
 model.eval()
 style_dict = {cls: [] for cls in full_dataset.animal_classes}
 
+
 with torch.no_grad():
-    for mel_spec, label, _ in tqdm(DataLoader(full_dataset, batch_size=1), desc="Extracting styles"):
-        mel_spec = mel_spec.to(device)
-        style_emb = model.extract_style(mel_spec).cpu().squeeze(0).numpy()
+    for whisper_mel, vocoder_mel, label, _ in tqdm(DataLoader(full_dataset, batch_size=1), desc="Extracting styles"):
+        whisper_mel = whisper_mel.to(device)
+        style_emb = model.extract_style(whisper_mel).cpu().squeeze(0).numpy()
         class_name = full_dataset.animal_classes[label.item()]
         style_dict[class_name].append(style_emb)
 

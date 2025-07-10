@@ -63,3 +63,47 @@ class AnimalStyleEncoder(nn.Module):
         pooled_features = whisper_features.mean(dim=1)
         style_embedding = self.style_encoder(pooled_features)
         return style_embedding
+
+class AnimalStyleDecoder(nn.Module):
+    """Decoder that reconstructs a Mel spectrogram from a style embedding"""
+    def __init__(self, style_dim=128, n_mels=80, n_frames=3000, n_classes=None):
+        super().__init__()
+        self.n_mels = n_mels
+        self.n_frames = n_frames
+        if n_classes is not None:
+            self.class_emb = nn.Embedding(n_classes, style_dim)
+            input_dim = style_dim * 2
+        else:
+            self.class_emb = None
+            input_dim = style_dim
+        self.decoder = nn.Sequential(
+            nn.Linear(input_dim, style_dim * 4),
+            nn.ReLU(),
+            nn.Linear(style_dim * 4, n_mels * n_frames)
+        )
+
+    def forward(self, style_embedding, class_idx=None):
+        if self.class_emb is not None and class_idx is not None:
+            class_embedding = self.class_emb(class_idx)
+            x = torch.cat([style_embedding, class_embedding], dim=-1)
+        else:
+            x = style_embedding
+        x = self.decoder(x)
+        x = x.view(-1, self.n_mels, self.n_frames)
+        return x
+
+class AnimalAutoencoder(nn.Module):
+    """Frozen encoder + trainable decoder for Mel reconstruction"""
+    def __init__(self, encoder: AnimalStyleEncoder, decoder: AnimalStyleDecoder):
+        super().__init__()
+        self.encoder = encoder
+        self.decoder = decoder
+        # Freeze encoder
+        for param in self.encoder.parameters():
+            param.requires_grad = False
+
+    def forward(self, mel_spectrogram):
+        with torch.no_grad():
+            style_embedding = self.encoder.extract_style(mel_spectrogram)
+        mel_recon = self.decoder(style_embedding)
+        return mel_recon

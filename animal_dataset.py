@@ -80,25 +80,21 @@ class AnimalSoundDataset(Dataset):
             padding = target_length - waveform.shape[1]
             waveform = F.pad(waveform, (0, padding))
 
-        # Convert to mel spectrogram
-        mel_transform = torchaudio.transforms.MelSpectrogram(
-            sample_rate=self.sr,
-            n_mels=self.n_mels,
-            n_fft=400,
-            hop_length=160
+        # Whisper-style Mel spec (for encoder)
+        whisper_mel_transform = torchaudio.transforms.MelSpectrogram(
+            sample_rate=16000, n_mels=80, n_fft=400, hop_length=160
         )
-        mel_spec = mel_transform(waveform)  # (1, n_mels, time)
+        whisper_mel = whisper_mel_transform(waveform)
+        whisper_mel = torch.log(whisper_mel + 1e-8).squeeze(0)
+        whisper_mel = F.pad(whisper_mel, (0, max(0, 3000 - whisper_mel.shape[1])))[:, :3000]
 
-        # Log-mel (no normalization)
-        mel_spec = torch.log(mel_spec + 1e-8)
-        mel_spec = mel_spec.squeeze(0)  # (n_mels, time)
+        # Vocoder-style Mel spec (for decoder target)
+        vocoder_mel_transform = torchaudio.transforms.MelSpectrogram(
+            sample_rate=22050, n_mels=80, n_fft=1024, hop_length=256
+        )
+        vocoder_waveform = torchaudio.functional.resample(waveform, orig_freq=16000, new_freq=22050)
+        vocoder_mel = vocoder_mel_transform(vocoder_waveform)
+        vocoder_mel = torch.log(vocoder_mel + 1e-8).squeeze(0)
+        vocoder_mel = F.pad(vocoder_mel, (0, max(0, 2581 - vocoder_mel.shape[1])))[:, :2581]
 
-        # Pad or trim mel_spec to 3000 frames (time dimension)
-        target_frames = 3000
-        if mel_spec.shape[1] > target_frames:
-            mel_spec = mel_spec[:, :target_frames]
-        else:
-            pad_amt = target_frames - mel_spec.shape[1]
-            mel_spec = F.pad(mel_spec, (0, pad_amt))
-
-        return mel_spec, label, waveform.squeeze(0)
+        return whisper_mel, vocoder_mel, label, waveform.squeeze(0)
