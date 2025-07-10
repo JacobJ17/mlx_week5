@@ -30,10 +30,10 @@ class AnimalStyleEncoder(nn.Module):
         self.style_encoder = nn.Sequential(
             nn.Linear(self.whisper_dim, style_dim * 2),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.3),
             nn.Linear(style_dim * 2, style_dim),
             nn.ReLU(),
-            nn.Dropout(0.1)
+            nn.Dropout(0.2)
         )
         
         # Animal classifier
