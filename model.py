@@ -66,7 +66,7 @@ class AnimalStyleEncoder(nn.Module):
 
 class AnimalStyleDecoder(nn.Module):
     """Decoder that reconstructs a Mel spectrogram from a style embedding"""
-    def __init__(self, style_dim=128, n_mels=80, n_frames=3000, n_classes=None):
+    def __init__(self, style_dim=128, n_mels=80, n_frames=2581, n_classes=None):  # Changed from 3000 to 2581
         super().__init__()
         self.n_mels = n_mels
         self.n_frames = n_frames

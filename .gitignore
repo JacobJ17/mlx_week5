@@ -1,3 +1,4 @@
 data/*
 wandb/*
 .cache
+*.pt

@@ -7,16 +7,16 @@ import pandas as pd
 
 ANIMAL_CLASSES = [
     'dog',
-    # 'chirping_birds',
+    'chirping_birds',
     'crow',
     'sheep',
-    # 'frog',
+    'frog',
     'cow',
-    # 'hen',
+    'hen',
     'pig',
-    # 'rooster',
+    'rooster',
     'cat',
-    # 'crickets',
+    'crickets',
 ]
 
 class AnimalSoundDataset(Dataset):
