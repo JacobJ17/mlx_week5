@@ -33,7 +33,7 @@ class AnimalStyleEncoder(nn.Module):
             nn.Dropout(0.3),
             nn.Linear(style_dim * 2, style_dim),
             nn.ReLU(),
-            nn.Dropout(0.2)
+            nn.Dropout(0.3)
         )
         
         # Animal classifier

@@ -8,10 +8,10 @@ import numpy as np
 import json
 
 # Hyperparameters
-batch_size = 8
-num_epochs = 10
+batch_size = 16
+num_epochs = 8
 learning_rate = 1e-4
-val_split = 0.1
+val_split = 0.15
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load full dataset

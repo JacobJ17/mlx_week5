@@ -5,8 +5,8 @@ from model import AnimalStyleEncoder, AnimalStyleDecoder, AnimalAutoencoder
 from tqdm import tqdm
 
 # Hyperparameters
-batch_size = 8
-num_epochs = 20
+batch_size = 64
+num_epochs = 8
 learning_rate = 1e-4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
